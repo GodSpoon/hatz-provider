@@ -14,7 +14,7 @@ try {
   process.exit(1);
 }
 
-const cli = join(__dirname, "src", "cli.ts");
+const cli = join(__dirname, "cli.ts");
 const child = spawn("bun", ["run", cli, ...process.argv.slice(2)], {
   stdio: "inherit",
   env: process.env,

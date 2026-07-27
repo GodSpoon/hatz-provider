@@ -33,7 +33,7 @@ export async function install(models: HatzModel[], apiKey: string): Promise<void
     `ANTHROPIC_BASE_URL=${BASE_URL}`,
     `ANTHROPIC_API_KEY=${apiKey}`,
     "# Model aliases: sonnet, opus, haiku resolve to latest Claude family models",
-    `# Available: ${models.filter(m => m.developer === "Anthropic").map(m => m.name).slice(0, 5).join(", ")}...`,
+    `# Available: ${models.filter(m => m.developer.toLowerCase() === "anthropic").map(m => m.name).slice(0, 5).join(", ")}...`,
     "# === end Hatz AI ===",
   ].join("\n") + "\n";
 

@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.3] - 2026-07-26
+
+### Fixed
+- Published tarball was missing the entire CLI source: `files` pointed at a nonexistent `src/` directory, so `npx hatz-provider` shipped only docs and a broken entry point. `cli.js` now resolves `cli.ts` at the package root and `files` includes `cli.ts`, `catalog.ts`, and `agents/`.
+- Slimmed README, removed em dashes from package description.
+
 ## [1.0.0] — 2026-07-21
 
 ### Added

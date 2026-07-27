@@ -1,12 +1,12 @@
 # hatz-provider
 
-Install Hatz AI as a provider for any coding agent — one command.
+Installs Hatz AI as a model provider for coding agents. One command:
 
 ```bash
 npx hatz-provider install
 ```
 
-## Supported Agents
+## Supported agents
 
 | Agent | Config location | API surface |
 |-------|----------------|-------------|
@@ -16,16 +16,16 @@ npx hatz-provider install
 | [Hermes](https://hermesagent.com) | `~/.hermes/config.yaml` + `.env` | openai-completions |
 | [OpenClaw](https://openclaw.ai) | `~/.openclaw/openclaw.json` | openai-completions |
 
-## Quick Start
+## Quick start
 
 ```bash
-# Set your Hatz API key (get one at https://ai.hatz.ai → Workspace → API Keys)
+# Get an API key at https://ai.hatz.ai (Workspace → API Keys)
 export HATZ_API_KEY="hzat-..."
 
-# Install for all detected agents
+# Install for every detected agent
 npx hatz-provider install
 
-# Or pick one
+# Or just one
 npx hatz-provider install omp
 npx hatz-provider install claude-code
 ```
@@ -37,26 +37,26 @@ hatz-provider install [agent]     Install provider (fetches live catalog)
 hatz-provider update [agent]      Refresh models from live catalog
 hatz-provider uninstall [agent]   Remove provider
 hatz-provider status              Show install status across agents
-hatz-provider list                List all 80+ available models
+hatz-provider list                List all available models
 ```
 
 Agents: `omp`, `pi`, `hermes`, `claude-code`, `openclaw`, `all` (default).
 
-## How It Works
+## How it works
 
-Fetches Hatz's live model catalog (80+ models across Anthropic, OpenAI, Google, xAI, DeepSeek, Meta, Mistral, and more) and writes the appropriate config for each agent:
+The installer fetches the live Hatz model catalog (80+ models from Anthropic, OpenAI, Google, xAI, DeepSeek, Meta, Mistral, and others) and writes a guarded block into each agent's config:
 
-- **omp, pi, Claude Code** use the Anthropic Messages gateway at `https://ai.hatz.ai/v1/anthropic` — proper SSE streaming with full event payloads.
-- **Hermes, OpenClaw** use the standard OpenAI-compatible endpoint at `https://ai.hatz.ai/v1`.
+- omp, pi, and Claude Code use the Anthropic Messages gateway at `https://ai.hatz.ai/v1/anthropic`, with proper SSE streaming and full event payloads.
+- Hermes and OpenClaw use the OpenAI-compatible endpoint at `https://ai.hatz.ai/v1`.
 
 ## Requirements
 
-- [Bun](https://bun.sh) runtime (the CLI is TypeScript)
+- [Bun](https://bun.sh) (the CLI is TypeScript, executed by bun)
 - A [Hatz AI](https://ai.hatz.ai) API key
 
-## Model Updates
+## Updating models
 
-Re-run `install` or `update` anytime. Only the Hatz block in each agent's config is touched — other providers are safe.
+Run `install` or `update` again. Only the Hatz block in each config is touched; other providers are left alone.
 
 ## License
 

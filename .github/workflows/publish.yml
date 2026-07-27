@@ -22,4 +22,4 @@ jobs:
       # npm CLI >= 11.5.1 is required for OIDC trusted publishing
       - run: npm install -g npm@latest
 
-      - run: npm --version && env | grep -o "ACTIONS_ID_TOKEN_[A-Z]*" | sort && npm publish --access public
+      - run: npm publish --provenance --access public

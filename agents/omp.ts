@@ -8,7 +8,7 @@ import { readFile, writeFile, mkdir, stat } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import type { HatzModel } from "../catalog";
-import { estimateContextWindow, clampMaxTokens, inputCapabilities } from "../catalog";
+import { estimateContextWindow, clampMaxTokens, supportsReasoning, supportsVision } from "../catalog";
 
 const OMP_DIR = join(homedir(), ".omp", "agent");
 const CONFIG_PATH = join(OMP_DIR, "models.yml");
@@ -32,7 +32,8 @@ export function generateBlock(models: HatzModel[], apiKey: string): string {
   lines.push("  hatz:");
   lines.push("    baseUrl: " + BASE_URL);
   lines.push("    api: " + API);
-  lines.push('    apiKey: "' + apiKey + '"');
+  lines.push("    authHeader: true");
+  lines.push('    apiKey: "$HATZ_API_KEY"');
   lines.push("    models:");
 
   for (const m of models) {
@@ -40,8 +41,10 @@ export function generateBlock(models: HatzModel[], apiKey: string): string {
     lines.push("        name: " + m.display_name + " (Hatz)");
     lines.push("        contextWindow: " + estimateContextWindow(m));
     lines.push("        maxTokens: " + clampMaxTokens(m.max_tokens));
-    lines.push("        reasoning: true");
-    lines.push("        input: " + inputCapabilities(m));
+    if (supportsReasoning(m)) {
+      lines.push("        reasoning: true");
+    }
+    lines.push("        input: " + (supportsVision(m) ? "[text, image]" : "[text]"));
   }
 
   lines.push(GUARD_END);

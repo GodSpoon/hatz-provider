@@ -1,5 +1,28 @@
 # Changelog
 
+## [1.1.0] - 2026-07-30
+
+### Added
+- `usage` command — shows Hatz credit usage and billing info
+- `--dry-run` / `-n` flag — preview install/uninstall without writing files
+- `supportsReasoning()` and `supportsVision()` helpers in catalog — models only get `reasoning: true` when they actually support it
+- Developer-based context window estimation (cleaner than regex-only)
+
+### Fixed
+- omp: API key now written as `$HATZ_API_KEY` env reference instead of literal key
+- omp: added `authHeader: true` for proper Bearer token injection
+- Hermes: config.yaml now writes an actual `providers.hatz.base_url` entry (was comment-only, did nothing)
+- Hermes: uninstall now removes the `providers.hatz` YAML block, not just the comments
+- pi: removed needless dynamic import in `isInstalled()`
+- pi: removed unused `inputCapabilities` import
+- openclaw: removed unused catalog imports
+- package.json: fixed malformed JSON (stray braces in scripts block)
+- catalog: fixed regex to catch bare `o3`/`o4` model names
+
+### Changed
+- README rewritten — humanized, credits creator (Sam Ko), concise
+
+
 ## [1.0.3] - 2026-07-26
 
 ### Fixed

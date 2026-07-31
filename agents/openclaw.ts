@@ -8,7 +8,6 @@ import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import type { HatzModel } from "../catalog";
-import { estimateContextWindow, clampMaxTokens, inputCapabilities } from "../catalog";
 
 const CONFIG_PATH = join(homedir(), ".openclaw", "openclaw.json");
 const BASE_URL = "https://ai.hatz.ai/v1";

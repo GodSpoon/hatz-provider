@@ -9,6 +9,8 @@
  *   hatz-provider list               List available models from Hatz
  *   hatz-provider status             Show install status across agents
  *   hatz-provider catalog            Print models.yml block (for omp)
+ *   hatz-provider usage              Show credits/usage info from Hatz
+ *   -n, --dry-run                    Preview install/uninstall without writing files
  *
  * Agents: omp, pi, hermes, claude-code, openclaw, all
  *
@@ -28,6 +30,15 @@ type AgentModule = {
 const AGENT_IDS = ["omp", "pi", "hermes", "claude-code", "openclaw"] as const;
 type AgentId = (typeof AGENT_IDS)[number];
 
+// Config targets per agent, shown by --dry-run (mirrors agents/*.ts paths).
+const AGENT_PATHS: Record<AgentId, string> = {
+  omp: "~/.omp/agent/models.yml",
+  pi: "~/.pi/extensions/hatz/",
+  hermes: "~/.hermes/config.yaml + ~/.hermes/.env",
+  "claude-code": "~/.claude/.env",
+  openclaw: "~/.openclaw/openclaw.json",
+};
+
 async function loadAgent(id: AgentId): Promise<AgentModule> {
   return import(`./agents/${id}.ts`);
 }
@@ -43,7 +54,7 @@ function bail(msg: string): never {
 
 // ── Commands ───────────────────────────────────────────────────────────
 
-async function cmdInstall(agentId?: string): Promise<void> {
+async function cmdInstall(agentId?: string, dryRun = false): Promise<void> {
   const apiKey = getApiKey();
   if (!apiKey) bail("HATZ_API_KEY is not set.\n    export HATZ_API_KEY=\"your-key\"");
 
@@ -57,32 +68,56 @@ async function cmdInstall(agentId?: string): Promise<void> {
   }
 
   const targets = agentId ? [agentId as AgentId] : [...AGENT_IDS];
-  for (const id of targets) {
-    try {
-      const agent = await loadAgent(id);
-      console.log(`\n🔧  ${agent.agentName()}...`);
-      await agent.install(models, apiKey);
-      console.log(`    ✅  Installed`);
-    } catch (err: unknown) {
-      console.log(`    ⚠   Skipped: ${err instanceof Error ? err.message : err}`);
+  if (dryRun) {
+    console.log("\n🔍  Dry run — would install:");
+    for (const id of targets) {
+      try {
+        const agent = await loadAgent(id);
+        console.log(`    ${agent.agentName()}  →  ${AGENT_PATHS[id]}`);
+      } catch {
+        console.log(`    ${id}  →  (config path unknown)`);
+      }
+    }
+  } else {
+    for (const id of targets) {
+      try {
+        const agent = await loadAgent(id);
+        console.log(`\n🔧  ${agent.agentName()}...`);
+        await agent.install(models, apiKey);
+        console.log(`    ✅  Installed`);
+      } catch (err: unknown) {
+        console.log(`    ⚠   Skipped: ${err instanceof Error ? err.message : err}`);
+      }
     }
   }
-  console.log(`\n🎉  Done!`);
+  console.log(dryRun ? "\nDry run — no files written" : "\n🎉  Done!");
 }
 
-async function cmdUninstall(agentId?: string): Promise<void> {
+async function cmdUninstall(agentId?: string, dryRun = false): Promise<void> {
   const targets = agentId ? [agentId as AgentId] : [...AGENT_IDS];
-  for (const id of targets) {
-    try {
-      const agent = await loadAgent(id);
-      console.log(`🗑   ${agent.agentName()}...`);
-      await agent.uninstall();
-      console.log(`    ✅  Removed`);
-    } catch {
-      console.log(`    ⚠   Skipped (not found)`);
+  if (dryRun) {
+    console.log("🔍  Dry run — would remove:");
+    for (const id of targets) {
+      try {
+        const agent = await loadAgent(id);
+        console.log(`    ${agent.agentName()}  →  ${AGENT_PATHS[id]}`);
+      } catch {
+        console.log(`    ${id}  →  (config path unknown)`);
+      }
+    }
+  } else {
+    for (const id of targets) {
+      try {
+        const agent = await loadAgent(id);
+        console.log(`🗑   ${agent.agentName()}...`);
+        await agent.uninstall();
+        console.log(`    ✅  Removed`);
+      } catch {
+        console.log(`    ⚠   Skipped (not found)`);
+      }
     }
   }
-  console.log(`\n✅  Done.`);
+  console.log(dryRun ? "Dry run — no files written" : "\n✅  Done.");
 }
 
 async function cmdStatus(): Promise<void> {
@@ -110,6 +145,71 @@ async function cmdList(): Promise<void> {
   console.log(`\n  ${models.length} models total`);
 }
 
+async function cmdUsage(): Promise<void> {
+  const apiKey = getApiKey();
+  if (!apiKey) bail("HATZ_API_KEY is not set.\n    export HATZ_API_KEY=\"your-key\"");
+
+  console.log("📊  Fetching Hatz usage...\n");
+  let resp: Response;
+  try {
+    resp = await fetch("https://ai.hatz.ai/v1/usage", {
+      headers: { "X-API-Key": apiKey, Accept: "application/json" },
+    });
+  } catch (err: unknown) {
+    bail(`Failed to reach usage endpoint: ${err instanceof Error ? err.message : err}`);
+  }
+
+  if (resp.status === 404) {
+    bail("Usage endpoint not available (HTTP 404). This account/plan may not support it.");
+  } else if (resp.status === 401 || resp.status === 403) {
+    bail(`Usage endpoint rejected the API key (HTTP ${resp.status}). Check HATZ_API_KEY.`);
+  } else if (resp.status === 429) {
+    bail("Rate limited (HTTP 429). Try again later.");
+  } else if (!resp.ok) {
+    bail(`Usage endpoint returned HTTP ${resp.status}.`);
+  }
+
+  let data: unknown;
+  try {
+    data = await resp.json();
+  } catch {
+    bail("Usage endpoint returned a non-JSON response.");
+  }
+
+  // The API may wrap the payload in a `data` field; unwrap it if so.
+  const root = (typeof data === "object" && data !== null ? data : { raw: data }) as Record<string, unknown>;
+  const obj =
+    root.data && typeof root.data === "object" && !Array.isArray(root.data)
+      ? (root.data as Record<string, unknown>)
+      : root;
+
+  const pick = (keys: string[]): number | undefined => {
+    for (const key of keys) {
+      const v = obj[key];
+      if (typeof v === "number") return v;
+      if (typeof v === "string" && v.trim() !== "" && !Number.isNaN(Number(v))) return Number(v);
+    }
+    return undefined;
+  };
+
+  const remaining = pick(["credits_remaining", "remaining_credits", "creditsRemaining", "credit_balance", "credits_left", "balance"]);
+  const used = pick(["credits_used", "used_credits", "creditsUsed", "credits_spent", "spent_credits"]);
+  const total = pick(["total_credits", "credits_total", "totalCredits", "credit_limit", "total"]);
+  const modelsUsed = pick(["models_used", "model_count", "modelsUsed"]);
+
+  if (remaining === undefined && used === undefined && total === undefined && modelsUsed === undefined) {
+    console.log("Hatz AI usage (raw response):");
+    console.log(JSON.stringify(data, null, 2));
+    return;
+  }
+
+  console.log("Hatz AI usage:\n");
+  if (remaining !== undefined) console.log(`  Credits remaining:  ${remaining}`);
+  if (used !== undefined) console.log(`  Credits used:       ${used}`);
+  if (total !== undefined) console.log(`  Total credits:      ${total}`);
+  if (modelsUsed !== undefined) console.log(`  Models used:        ${modelsUsed}`);
+}
+
 async function cmdHelp(): Promise<void> {
   console.log("hatz-provider — Hatz AI provider for coding agents\n");
   console.log("Usage:");
@@ -118,7 +218,10 @@ async function cmdHelp(): Promise<void> {
   console.log("  hatz-provider uninstall [agent]   Remove Hatz provider");
   console.log("  hatz-provider status              Show install status");
   console.log("  hatz-provider list                List available Hatz models");
-  console.log("  hatz-provider catalog             Print omp models.yml block\n");
+  console.log("  hatz-provider catalog             Print omp models.yml block");
+  console.log("  hatz-provider usage               Show credits/usage from Hatz\n");
+  console.log("Flags:");
+  console.log("  -n, --dry-run                    Preview install/uninstall without writing files\n");
   console.log("Agents: omp, pi, hermes, claude-code, openclaw, all (default)");
   console.log("Auto-detects installed agents. Uses appropriate API per agent.");
   console.log("\nAPI surfaces used:");
@@ -130,17 +233,23 @@ async function cmdHelp(): Promise<void> {
 
 // ── Main ───────────────────────────────────────────────────────────────
 
-const cmd = process.argv[2];
-const target = process.argv[3];
+// Flags may appear anywhere in args; strip them before command parsing so
+// `-n install omp` and `install omp -n` both work.
+const dryRun = process.argv.includes("--dry-run") || process.argv.includes("-n");
+const args = process.argv.slice(2).filter((a) => a !== "--dry-run" && a !== "-n");
+const cmd = args[0];
+const target = args[1];
 
 if (cmd === "install" || cmd === "i" || cmd === "update" || cmd === "up") {
-  await cmdInstall(target);
+  await cmdInstall(target, dryRun);
 } else if (cmd === "uninstall" || cmd === "u" || cmd === "remove" || cmd === "rm") {
-  await cmdUninstall(target);
+  await cmdUninstall(target, dryRun);
 } else if (cmd === "status" || cmd === "st") {
   await cmdStatus();
 } else if (cmd === "list" || cmd === "ls") {
   await cmdList();
+} else if (cmd === "usage" || cmd === "us") {
+  await cmdUsage();
 } else if (cmd === "catalog" || cmd === "cat") {
   // Just the omp block for backward compat
   const apiKey = getApiKey();

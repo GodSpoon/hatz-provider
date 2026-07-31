@@ -22,18 +22,39 @@ export async function fetchCatalog(apiKey: string): Promise<HatzModel[]> {
   return models.filter((m) => m.name !== "auto");
 }
 
-/** Estimate context window for a model based on its name/developer. */
+/** Estimate context window for a model. Developer-based primary, regex fallback. */
 export function estimateContextWindow(model: HatzModel): number {
+  const dev = model.developer.toLowerCase();
+  // Developer defaults (most accurate)
+  if (dev === "anthropic" || dev === "claude") return 200_000;
+  if (dev === "google" || dev === "gemini") return 1_048_576;
+  if (dev === "openai") return 128_000;
+  if (dev === "meta" || dev === "llama") return 128_000;
+  if (dev === "deepseek") return 128_000;
+  if (dev === "xai" || dev === "grok") return 131_072;
+  if (dev === "moonshot" || dev === "kimi") return 131_072;
+  // Regex overrides for specific models
   const n = model.name;
-  if (/gpt.*(5\.[12456]|5-nano|5-mini|5-chat|[o]3|[o]4|4o)/.test(n)) return 128_000;
   if (/gpt-4\.1/.test(n)) return 1_048_576;
   if (/gemini-3|gemini-2\.5/.test(n)) return 1_048_576;
-  if (/llama/.test(n)) return 128_000;
-  if (/deepseek/.test(n)) return 128_000;
-  if (/claude/.test(n)) return 200_000;
-  if (/grok/.test(n)) return 131_072;
-  if (/kimi|moonshot/.test(n)) return 131_072;
-  return 200_000;
+  return 200_000; // conservative default
+}
+
+/** Detect if a model supports reasoning/thinking. */
+export function supportsReasoning(model: HatzModel): boolean {
+  const n = model.name;
+  // Extended-thinking and reasoning models
+  if (/\b(o[34]|gpt-5\.[2456])\b/.test(n)) return true;
+  if (/claude.*(sonnet|opus).*4/.test(n)) return true; // Claude 4.x series
+  if (/gemini.*(thinking|flash-thinking)/i.test(n)) return true;
+  if (/deepseek.*(reasoner|r1)/i.test(n)) return true;
+  if (/grok.*(think|reason)/i.test(n)) return true;
+  return false;
+}
+
+/** Detect if a model supports vision/image input. */
+export function supportsVision(model: HatzModel): boolean {
+  return model.vision;
 }
 
 /** Cap max tokens to a reasonable value. */

@@ -4,11 +4,11 @@
  * Creates ~/.pi/extensions/hatz/ with package.json + index.ts.
  * Pi resolves $VAR env references in apiKey — no literal key needed.
  */
-import { writeFile, mkdir } from "node:fs/promises";
+import { writeFile, mkdir, stat, rm } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import type { HatzModel } from "../catalog";
-import { estimateContextWindow, clampMaxTokens, inputCapabilities } from "../catalog";
+import { estimateContextWindow, clampMaxTokens, supportsReasoning, supportsVision } from "../catalog";
 
 const EXT_DIR = join(homedir(), ".pi", "extensions", "hatz");
 const BASE_URL = "https://ai.hatz.ai/v1/anthropic";
@@ -19,7 +19,7 @@ export function agentName(): string {
 }
 
 export async function isInstalled(): Promise<boolean> {
-  try { await (await import("node:fs/promises")).stat(join(EXT_DIR, "index.ts")); return true; } catch { return false; }
+  try { await stat(join(EXT_DIR, "index.ts")); return true; } catch { return false; }
 }
 
 function generateIndex(models: HatzModel[]): string {
@@ -27,8 +27,8 @@ function generateIndex(models: HatzModel[]): string {
     return `      {
         id: "${m.name}",
         name: "${m.display_name} (Hatz)",
-        reasoning: true,
-        input: [${m.vision ? '"text", "image"' : '"text"'}],
+        reasoning: ${supportsReasoning(m)},
+        input: [${supportsVision(m) ? '"text", "image"' : '"text"'}],
         cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
         contextWindow: ${estimateContextWindow(m)},
         maxTokens: ${clampMaxTokens(m.max_tokens)},
@@ -69,6 +69,5 @@ export async function install(models: HatzModel[], _apiKey: string): Promise<voi
 }
 
 export async function uninstall(): Promise<void> {
-  const { rm } = await import("node:fs/promises");
   try { await rm(EXT_DIR, { recursive: true }); } catch { /* didn't exist */ }
 }

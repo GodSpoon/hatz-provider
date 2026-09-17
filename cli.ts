@@ -93,7 +93,12 @@ async function promptMasked(question: string): Promise<string> {
 
 async function promptApiKey(): Promise<string> {
   if (process.stdin.isTTY) {
-    return promptMasked("Enter your HATZ_API_KEY: ");
+    const key = await promptMasked("Enter your HATZ_API_KEY: ");
+    if (!key) {
+      console.error("\n❌  API key cannot be empty.");
+      return promptApiKey();
+    }
+    return key;
   }
   bail(`HATZ_API_KEY is not set and no interactive terminal is available.
     Set it with one of:

@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.8] - 2026-09-17
+
+### Fixed
+- Interactive `HATZ_API_KEY` prompt now re-asks if you press Enter without typing a key.
+- All missing-key error messages are now universal (PowerShell/cmd/bash examples).
+
 ## [1.1.7] - 2026-09-17
 
 ### Fixed

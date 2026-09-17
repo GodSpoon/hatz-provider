@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.1] - 2026-09-17
+
+### Fixed
+- Removed broken `prepare: skilld prepare` script and unused `npm-skills` dependency that caused npm publish to fail (`skilld: not found`).
+- Added `npm ci` to publish workflow so dependencies are installed before publish.
+
 ## [1.1.0] - 2026-07-30
 
 ### Added

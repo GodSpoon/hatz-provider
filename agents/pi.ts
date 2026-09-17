@@ -22,6 +22,10 @@ export async function isInstalled(): Promise<boolean> {
   try { await stat(join(EXT_DIR, "index.ts")); return true; } catch { return false; }
 }
 
+export async function isAgentPresent(): Promise<boolean> {
+  try { await stat(join(homedir(), ".pi")); return true; } catch { return false; }
+}
+
 function generateIndex(models: HatzModel[]): string {
   const modelDefs = models.map((m) => {
     return `      {

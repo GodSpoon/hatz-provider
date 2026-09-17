@@ -19,12 +19,12 @@
  */
 import { fetchCatalog, type HatzModel } from "./catalog";
 import readline from "node:readline";
-import readline from "node:readline";
 
 // Lazy-load agent modules to avoid importing fs for agents not being used.
 type AgentModule = {
   agentName: () => string;
   isInstalled: () => Promise<boolean>;
+  isAgentPresent: () => Promise<boolean>;
   install: (models: HatzModel[], apiKey: string) => Promise<void>;
   uninstall: () => Promise<void>;
 };
@@ -43,6 +43,19 @@ const AGENT_PATHS: Record<AgentId, string> = {
 
 async function loadAgent(id: AgentId): Promise<AgentModule> {
   return import(`./agents/${id}.ts`);
+}
+
+async function detectAgents(): Promise<AgentId[]> {
+  const detected: AgentId[] = [];
+  for (const id of AGENT_IDS) {
+    try {
+      const agent = await loadAgent(id);
+      if (await agent.isAgentPresent()) detected.push(id);
+    } catch {
+      // ignore unloadable agents
+    }
+  }
+  return detected;
 }
 
 async function promptMasked(question: string): Promise<string> {
@@ -130,7 +143,23 @@ async function cmdInstall(agentId?: string, dryRun = false): Promise<void> {
     bail(`Failed to fetch catalog: ${err instanceof Error ? err.message : err}`);
   }
 
-  const targets = agentId ? [agentId as AgentId] : [...AGENT_IDS];
+  let targets: AgentId[];
+  if (agentId) {
+    targets = [agentId as AgentId];
+  } else {
+    targets = await detectAgents();
+    if (targets.length === 0) {
+      console.log("\nNo supported agents detected.");
+      console.log("Install one first, or target a specific agent:");
+      console.log("  npx hatz-provider install <agent>");
+      console.log("\nSupported agents: omp, pi, hermes, claude-code, openclaw");
+      return;
+    }
+    const skipped = AGENT_IDS.filter((id) => !targets.includes(id));
+    if (skipped.length > 0) {
+      console.log(`\nAuto-detected ${targets.length} agent(s). Skipping: ${skipped.join(", ")}`);
+    }
+  }
   if (dryRun) {
     console.log("\n🔍  Dry run — would install:");
     for (const id of targets) {
@@ -157,7 +186,22 @@ async function cmdInstall(agentId?: string, dryRun = false): Promise<void> {
 }
 
 async function cmdUninstall(agentId?: string, dryRun = false): Promise<void> {
-  const targets = agentId ? [agentId as AgentId] : [...AGENT_IDS];
+  let targets: AgentId[];
+  if (agentId) {
+    targets = [agentId as AgentId];
+  } else {
+    targets = await detectAgents();
+    if (targets.length === 0) {
+      console.log("No supported agents detected.");
+      console.log("Run with an explicit agent to remove a config:");
+      console.log("  npx hatz-provider uninstall <agent>");
+      return;
+    }
+    const skipped = AGENT_IDS.filter((id) => !targets.includes(id));
+    if (skipped.length > 0) {
+      console.log(`\nAuto-detected ${targets.length} agent(s). Skipping: ${skipped.join(", ")}`);
+    }
+  }
   if (dryRun) {
     console.log("🔍  Dry run — would remove:");
     for (const id of targets) {
@@ -283,7 +327,7 @@ async function cmdHelp(): Promise<void> {
   console.log("  hatz-provider usage               Show credits/usage from Hatz\n");
   console.log("Flags:");
   console.log("  -n, --dry-run                    Preview install/uninstall without writing files\n");
-  console.log("Agents: omp, pi, hermes, claude-code, openclaw, all (default)");
+  console.log("Agents: omp, pi, hermes, claude-code, openclaw, all (auto-detected)");
   console.log("Auto-detects installed agents. Uses appropriate API per agent.");
   console.log("\nAPI surfaces used:");
   console.log("  omp, pi, claude-code    → anthropic-messages");

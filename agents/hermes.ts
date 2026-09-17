@@ -4,7 +4,7 @@
  * Writes to ~/.hermes/config.yaml + ~/.hermes/.env
  * Uses openai-completions API (Hermes is OpenAI-compatible only).
  */
-import { writeFile, mkdir, readFile } from "node:fs/promises";
+import {writeFile, mkdir, readFile, stat} from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import type { HatzModel } from "../catalog";
@@ -28,6 +28,10 @@ export async function isInstalled(): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+export async function isAgentPresent(): Promise<boolean> {
+  try { await stat(join(homedir(), ".hermes")); return true; } catch { return false; }
 }
 
 export async function install(_models: HatzModel[], apiKey: string): Promise<void> {

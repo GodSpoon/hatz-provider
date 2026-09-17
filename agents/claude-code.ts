@@ -4,7 +4,7 @@
  * Sets ANTHROPIC_BASE_URL + ANTHROPIC_API_KEY env vars.
  * Writes to ~/.claude/.env (shell-sourced) and offers shell profile option.
  */
-import { writeFile, mkdir, readFile } from "node:fs/promises";
+import {writeFile, mkdir, readFile, stat} from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import type { HatzModel } from "../catalog";
@@ -23,6 +23,10 @@ export async function isInstalled(): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+export async function isAgentPresent(): Promise<boolean> {
+  try { await stat(join(homedir(), ".claude")); return true; } catch { return false; }
 }
 
 export async function install(models: HatzModel[], apiKey: string): Promise<void> {

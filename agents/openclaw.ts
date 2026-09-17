@@ -4,7 +4,7 @@
  * Writes to ~/.openclaw/openclaw.json — merges into existing config.
  * Uses openai-completions API.
  */
-import { readFile, writeFile, mkdir } from "node:fs/promises";
+import {readFile, writeFile, mkdir, stat} from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import type { HatzModel } from "../catalog";
@@ -26,6 +26,10 @@ export async function isInstalled(): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+export async function isAgentPresent(): Promise<boolean> {
+  try { await stat(join(homedir(), ".openclaw")); return true; } catch { return false; }
 }
 
 export function generateConfig(models: HatzModel[], apiKey: string): Record<string, unknown> {

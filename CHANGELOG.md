@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.2.0] - 2026-09-17
+
+### Changed
+- `install`/`uninstall` with no agent now auto-detect installed agents by their config directory (`~/.omp`, `~/.pi`, `~/.hermes`, `~/.claude`, `~/.openclaw`) and skip the rest.
+- Explicit `install <agent>` still force-installs regardless of detection.
+
+### Fixed
+- Removed duplicate `readline` import in cli.ts.
+
 ## [1.1.9] - 2026-09-17
 
 ### Fixed

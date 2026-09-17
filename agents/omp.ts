@@ -26,6 +26,10 @@ export async function isInstalled(): Promise<boolean> {
   try { await stat(CONFIG_PATH); return true; } catch { return false; }
 }
 
+export async function isAgentPresent(): Promise<boolean> {
+  try { await stat(join(homedir(), ".omp")); return true; } catch { return false; }
+}
+
 export function generateBlock(models: HatzModel[], apiKey: string): string {
   const lines = [GUARD];
   lines.push("providers:");

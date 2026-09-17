@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.1.3] - 2026-09-17
+
+### Fixed
+- Removed `bun` from `dependencies` so the package no longer bundles a platform-specific `bun` binary that fails on some Windows installs. Users must have Bun installed globally (already documented in README).
+
 ## [1.1.2] - 2026-09-17
 
 ### Fixed

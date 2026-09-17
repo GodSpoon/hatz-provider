@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.1.5] - 2026-09-17
+
+### Fixed
+- `cli.js` now resolves the real `bun.exe` on Windows (global npm install or `BUN_INSTALL`/`~/.bun`) and spawns it directly, fixing the `EINVAL` regression from v1.1.4 and avoiding the DEP0190 warning.
+
 ## [1.1.4] - 2026-09-17
 
 ### Fixed

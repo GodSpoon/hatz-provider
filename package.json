@@ -1,6 +1,6 @@
 {
   "name": "hatz-provider",
-  "version": "1.1.4",
+  "version": "1.1.5",
   "description": "Hatz AI provider installer for coding agents (omp, pi, hermes, claude-code, openclaw)",
   "type": "module",
   "bin": {

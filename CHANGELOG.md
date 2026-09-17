@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.1.6] - 2026-09-17
+
+### Fixed
+- `cli.ts` now interactively prompts for `HATZ_API_KEY` when it is not set, instead of showing a Unix-only `export` command. Non-TTY usage shows platform-specific examples for PowerShell, cmd.exe, and bash/zsh.
+
 ## [1.1.5] - 2026-09-17
 
 ### Fixed

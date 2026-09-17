@@ -18,6 +18,7 @@
  * for omp/pi/claude-code and openai-completions for hermes/openclaw.
  */
 import { fetchCatalog, type HatzModel } from "./catalog";
+import readline from "node:readline";
 
 // Lazy-load agent modules to avoid importing fs for agents not being used.
 type AgentModule = {
@@ -55,7 +56,7 @@ function bail(msg: string): never {
 // ── Commands ───────────────────────────────────────────────────────────
 
 async function cmdInstall(agentId?: string, dryRun = false): Promise<void> {
-  const apiKey = getApiKey();
+  const apiKey = await getApiKey();
   if (!apiKey) bail("HATZ_API_KEY is not set.\n    export HATZ_API_KEY=\"your-key\"");
 
   console.log("📡  Fetching Hatz model catalog...");
@@ -134,7 +135,7 @@ async function cmdStatus(): Promise<void> {
 }
 
 async function cmdList(): Promise<void> {
-  const apiKey = getApiKey();
+  const apiKey = await getApiKey();
   if (!apiKey) bail("HATZ_API_KEY is not set.");
 
   console.log("📡  Fetching Hatz model catalog...\n");
@@ -146,7 +147,7 @@ async function cmdList(): Promise<void> {
 }
 
 async function cmdUsage(): Promise<void> {
-  const apiKey = getApiKey();
+  const apiKey = await getApiKey();
   if (!apiKey) bail("HATZ_API_KEY is not set.\n    export HATZ_API_KEY=\"your-key\"");
 
   console.log("📊  Fetching Hatz usage...\n");
@@ -252,7 +253,7 @@ if (cmd === "install" || cmd === "i" || cmd === "update" || cmd === "up") {
   await cmdUsage();
 } else if (cmd === "catalog" || cmd === "cat") {
   // Just the omp block for backward compat
-  const apiKey = getApiKey();
+  const apiKey = await getApiKey();
   if (!apiKey) bail("HATZ_API_KEY is not set.");
   const models = await fetchCatalog(apiKey);
   const { generateBlock } = await import("./agents/omp.ts");

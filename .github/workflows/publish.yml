@@ -6,7 +6,6 @@ on:
   workflow_dispatch:
 
 permissions:
-  id-token: write
   contents: read
 
 jobs:
@@ -18,10 +17,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          registry-url: https://registry.npmjs.org
 
       - run: npm ci
 
-      # npm CLI >= 11.5.1 is required for OIDC trusted publishing
-      - run: npm install -g npm@latest
-
-      - run: npm publish --provenance --access public --loglevel=http
+      - run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

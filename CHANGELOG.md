@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.2] - 2026-09-17
+
+### Fixed
+- Switched npm publish from OIDC trusted publishing to `NODE_AUTH_TOKEN` because OIDC was not configured for this package at npmjs.com.
+- Removed `--provenance` flag (requires OIDC).
+
 ## [1.1.1] - 2026-09-17
 
 ### Fixed

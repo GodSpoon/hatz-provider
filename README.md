@@ -6,7 +6,7 @@ Adds Hatz AI as a model provider to your coding agents. One command.
 npx hatz-provider install
 ```
 
-Built by [Sam Ko](https://github.com/GodSpoon). Hatz (hatz.ai) is the provider.
+Built by [Sam King](https://github.com/GodSpoon)
 
 ## What it does
 

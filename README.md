@@ -41,8 +41,8 @@ npx hatz-provider install hermes
 | Agent | Config written |
 |-------|---------------|
 | [omp](https://omp.sh) | `~/.omp/agent/models.yml` |
-| [pi](https://pi.dev) | `~/.pi/extensions/hatz/` |
-| [Claude Code](https://claude.ai) | `~/.claude/.env` |
+| [pi](https://pi.dev) | `~/.pi/agent/extensions/hatz/` |
+| [Claude Code](https://claude.ai) | `~/.claude/settings.json` (`env` block) |
 | [Hermes](https://hermesagent.com) | `~/.hermes/config.yaml` + `.env` |
 | [OpenClaw](https://openclaw.ai) | `~/.openclaw/openclaw.json` |
 
@@ -80,7 +80,7 @@ export HATZ_API_KEY="hzat-..."
 
 ## How it works
 
-`hatz-provider` fetches the Hatz model catalog when you install and writes the right config for each agent. Where the agent can resolve env vars (omp, pi), the config references `$HATZ_API_KEY`. For agents that need a literal key (Claude Code, Hermes), it writes the key directly into the config. The key is never sent anywhere except to the Hatz API at runtime.
+`hatz-provider` fetches the Hatz model catalog when you install and writes the right config for each agent. Where the agent can resolve env vars (omp, pi, Hermes via `key_env`), the config references `HATZ_API_KEY`. Claude Code stores the key in its `settings.json` `env` block. The key is never sent anywhere except to the Hatz API at runtime.
 
 Run `install` or `update` again to refresh the model list. Only the Hatz block is changed.
 

@@ -37,7 +37,7 @@ export function generateBlock(models: HatzModel[], apiKey: string): string {
   lines.push("    baseUrl: " + BASE_URL);
   lines.push("    api: " + API);
   lines.push("    authHeader: true");
-  lines.push('    apiKey: "$HATZ_API_KEY"');
+  lines.push('    apiKey: "HATZ_API_KEY"');
   lines.push("    models:");
 
   for (const m of models) {

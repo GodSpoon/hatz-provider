@@ -2,9 +2,10 @@
  * Hermes agent config generator.
  *
  * Writes to ~/.hermes/config.yaml + ~/.hermes/.env
- * Uses openai-completions API (Hermes is OpenAI-compatible only).
+ * Config v12 schema: `api`/`base_url` = endpoint URL, `transport` =
+ * wire format (chat_completions | anthropic_messages | codex_responses).
  */
-import {writeFile, mkdir, readFile, stat} from "node:fs/promises";
+import { writeFile, mkdir, readFile, stat } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import type { HatzModel } from "../catalog";
@@ -13,7 +14,6 @@ const HERMES_DIR = join(homedir(), ".hermes");
 const CONFIG_PATH = join(HERMES_DIR, "config.yaml");
 const ENV_PATH = join(HERMES_DIR, ".env");
 const BASE_URL = "https://ai.hatz.ai/v1";
-const API = "openai-completions";
 const GUARD = "# === Hatz AI ===";
 const GUARD_END = "# === end Hatz AI ===";
 
@@ -31,7 +31,7 @@ export async function isInstalled(): Promise<boolean> {
 }
 
 export async function isAgentPresent(): Promise<boolean> {
-  try { await stat(join(homedir(), ".hermes")); return true; } catch { return false; }
+  try { await stat(HERMES_DIR); return true; } catch { return false; }
 }
 
 export async function install(_models: HatzModel[], apiKey: string): Promise<void> {
@@ -63,8 +63,13 @@ export async function install(_models: HatzModel[], apiKey: string): Promise<voi
   }
   existingConfig = existingConfig.trimEnd();
 
-  // Merge a real `providers:` block into the existing config.
-  const hatzBlock = `  hatz:\n    base_url: "${BASE_URL}"`;
+  // Merge a `providers.hatz` entry into the existing config.
+  const hatzBlock = [
+    `  hatz:`,
+    `    base_url: "${BASE_URL}"`,
+    `    transport: chat_completions`,
+    `    key_env: HATZ_API_KEY`,
+  ].join("\n");
   const lines = existingConfig ? existingConfig.split("\n") : [];
   const providersIdx = lines.findIndex(line => /^providers:/.test(line));
 
@@ -87,7 +92,7 @@ export async function install(_models: HatzModel[], apiKey: string): Promise<voi
       break;
     }
     // providers is the last section — drop trailing blank/comment lines so
-    // the hatz block lands right after the last indented line.
+    // the hatz entry lands right after the last indented line.
     if (insertAt === lines.length) {
       while (insertAt > providersIdx + 1) {
         const line = lines[insertAt - 1];
@@ -111,8 +116,8 @@ export async function install(_models: HatzModel[], apiKey: string): Promise<voi
   const guardBlock = [
     GUARD,
     "# Hatz AI provider configured above (providers.hatz).",
-    `# Base URL: ${BASE_URL}`,
-    "# API key: $HATZ_API_KEY (from ~/.hermes/.env)",
+    `# Endpoint: ${BASE_URL}`,
+    "# API key: HATZ_API_KEY (from ~/.hermes/.env)",
     "#",
     "# Add models to your defaults:",
     "#   models:",

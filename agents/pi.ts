@@ -1,7 +1,8 @@
 /**
  * Pi (pi.dev) extension generator.
  *
- * Creates ~/.pi/extensions/hatz/ with package.json + index.ts.
+ * Creates ~/.pi/agent/extensions/hatz/ with package.json + index.ts
+ * (the current pi discovery root; ~/.pi/extensions is no longer scanned).
  * Pi resolves $VAR env references in apiKey — no literal key needed.
  */
 import { writeFile, mkdir, stat, rm } from "node:fs/promises";
@@ -10,7 +11,8 @@ import { join } from "node:path";
 import type { HatzModel } from "../catalog";
 import { estimateContextWindow, clampMaxTokens, supportsReasoning, supportsVision } from "../catalog";
 
-const EXT_DIR = join(homedir(), ".pi", "extensions", "hatz");
+const EXT_DIR = join(homedir(), ".pi", "agent", "extensions", "hatz");
+const LEGACY_EXT_DIR = join(homedir(), ".pi", "extensions", "hatz");
 const BASE_URL = "https://ai.hatz.ai/v1/anthropic";
 const API = "anthropic-messages";
 
@@ -70,8 +72,12 @@ export async function install(models: HatzModel[], _apiKey: string): Promise<voi
   }, null, 2) + "\n", "utf-8");
 
   await writeFile(join(EXT_DIR, "index.ts"), generateIndex(models), "utf-8");
+
+  // Clean the pre-0.85 discovery location, which pi no longer scans.
+  try { await rm(LEGACY_EXT_DIR, { recursive: true }); } catch { /* never existed */ }
 }
 
 export async function uninstall(): Promise<void> {
   try { await rm(EXT_DIR, { recursive: true }); } catch { /* didn't exist */ }
+  try { await rm(LEGACY_EXT_DIR, { recursive: true }); } catch { /* didn't exist */ }
 }

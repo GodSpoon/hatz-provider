@@ -15,7 +15,7 @@
  * Agents: omp, pi, hermes, claude-code, openclaw, all
  *
  * Auto-detects installed agents. Uses anthropic-messages gateway
- * for omp/pi/claude-code and openai-completions for hermes/openclaw.
+ * for omp/pi/claude-code and chat-completions for hermes/openclaw.
  */
 import { fetchCatalog, type HatzModel } from "./catalog";
 import readline from "node:readline";
@@ -35,9 +35,9 @@ type AgentId = (typeof AGENT_IDS)[number];
 // Config targets per agent, shown by --dry-run (mirrors agents/*.ts paths).
 const AGENT_PATHS: Record<AgentId, string> = {
   omp: "~/.omp/agent/models.yml",
-  pi: "~/.pi/extensions/hatz/",
+  pi: "~/.pi/agent/extensions/hatz/",
   hermes: "~/.hermes/config.yaml + ~/.hermes/.env",
-  "claude-code": "~/.claude/.env",
+  "claude-code": "~/.claude/settings.json",
   openclaw: "~/.openclaw/openclaw.json",
 };
 

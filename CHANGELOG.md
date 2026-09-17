@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.1.4] - 2026-09-17
+
+### Fixed
+- `cli.js` now spawns `bun.cmd` directly on Windows instead of using `shell: true`, removing the Node DEP0190 deprecation warning and the command-injection risk from unescaped arguments.
+
 ## [1.1.3] - 2026-09-17
 
 ### Fixed

@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.2.1] - 2026-09-17
+
+### Changed
+- README rewritten: auto-detect behavior, interactive key prompt, and PowerShell/cmd/bash key examples.
+
 ## [1.2.0] - 2026-09-17
 
 ### Changed

@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.1.7] - 2026-09-17
+
+### Fixed
+- `cli.ts` now actually prompts for `HATZ_API_KEY` when missing (masked input in TTY), with shell-specific fallback instructions for PowerShell, cmd.exe, and bash/zsh.
+
 ## [1.1.6] - 2026-09-17
 
 ### Fixed

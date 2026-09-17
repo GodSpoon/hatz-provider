@@ -19,6 +19,7 @@
  */
 import { fetchCatalog, type HatzModel } from "./catalog";
 import readline from "node:readline";
+import readline from "node:readline";
 
 // Lazy-load agent modules to avoid importing fs for agents not being used.
 type AgentModule = {
@@ -44,8 +45,65 @@ async function loadAgent(id: AgentId): Promise<AgentModule> {
   return import(`./agents/${id}.ts`);
 }
 
-function getApiKey(): string {
-  return process.env.HATZ_API_KEY || "";
+async function promptMasked(question: string): Promise<string> {
+  return new Promise((resolve) => {
+    const rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout,
+      terminal: true,
+    });
+    const stdout = process.stdout;
+    stdout.write(question);
+    if (!process.stdin.setRawMode) {
+      rl.question("", (answer) => {
+        resolve(answer.trim());
+      });
+      return;
+    }
+    process.stdin.setRawMode(true);
+    process.stdin.resume();
+    let value = "";
+    const onData = (char: Buffer | string) => {
+      const ch = Buffer.isBuffer(char) ? char.toString("utf8") : char;
+      if (ch === "\n" || ch === "\r" || ch === "\u0004") {
+        try { process.stdin.setRawMode(false); } catch {}
+        process.stdin.pause();
+        process.stdin.removeListener("data", onData);
+        rl.close();
+        stdout.write("\n");
+        resolve(value);
+        return;
+      }
+      if (ch === "\u0003") {
+        process.exit(1);
+      }
+      if (ch === "\b" || ch === "\x7f") {
+        if (value.length > 0) {
+          value = value.slice(0, -1);
+          stdout.write("\b \b");
+        }
+        return;
+      }
+      value += ch;
+      stdout.write("*");
+    };
+    process.stdin.on("data", onData);
+  });
+}
+
+async function promptApiKey(): Promise<string> {
+  if (process.stdin.isTTY) {
+    return promptMasked("Enter your HATZ_API_KEY: ");
+  }
+  bail(`HATZ_API_KEY is not set and no interactive terminal is available.
+    Set it with one of:
+      PowerShell:  \$env:HATZ_API_KEY = \"hzat-...\"
+      cmd.exe:     set HATZ_API_KEY=hzat-...
+      bash/zsh:    export HATZ_API_KEY=\"hzat-...\"`);
+}
+
+async function getApiKey(): Promise<string> {
+  return process.env.HATZ_API_KEY || (await promptApiKey());
 }
 
 function bail(msg: string): never {

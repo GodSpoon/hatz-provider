@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.1.9] - 2026-09-17
+
+### Fixed
+- Removed unreachable `if (!apiKey)` guards now that `getApiKey()` always returns a non-empty value (prompts in TTY, bails with shell-specific instructions otherwise).
+
 ## [1.1.8] - 2026-09-17
 
 ### Fixed

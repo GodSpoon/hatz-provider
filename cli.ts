@@ -120,7 +120,6 @@ function bail(msg: string): never {
 
 async function cmdInstall(agentId?: string, dryRun = false): Promise<void> {
   const apiKey = await getApiKey();
-  if (!apiKey) bail("HATZ_API_KEY is not set.\n    export HATZ_API_KEY=\"your-key\"");
 
   console.log("📡  Fetching Hatz model catalog...");
   let models: HatzModel[];
@@ -199,7 +198,6 @@ async function cmdStatus(): Promise<void> {
 
 async function cmdList(): Promise<void> {
   const apiKey = await getApiKey();
-  if (!apiKey) bail("HATZ_API_KEY is not set.");
 
   console.log("📡  Fetching Hatz model catalog...\n");
   const models = await fetchCatalog(apiKey);
@@ -211,7 +209,6 @@ async function cmdList(): Promise<void> {
 
 async function cmdUsage(): Promise<void> {
   const apiKey = await getApiKey();
-  if (!apiKey) bail("HATZ_API_KEY is not set.\n    export HATZ_API_KEY=\"your-key\"");
 
   console.log("📊  Fetching Hatz usage...\n");
   let resp: Response;
@@ -317,7 +314,6 @@ if (cmd === "install" || cmd === "i" || cmd === "update" || cmd === "up") {
 } else if (cmd === "catalog" || cmd === "cat") {
   // Just the omp block for backward compat
   const apiKey = await getApiKey();
-  if (!apiKey) bail("HATZ_API_KEY is not set.");
   const models = await fetchCatalog(apiKey);
   const { generateBlock } = await import("./agents/omp.ts");
   console.log(generateBlock(models, apiKey));
